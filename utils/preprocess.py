@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 sns.set_style('darkgrid')
 import akshare as ak
-from utils import normalize, func_list
+from uyils.utils import normalize, func_list
 import warnings
 warnings.filterwarnings('ignore')
 

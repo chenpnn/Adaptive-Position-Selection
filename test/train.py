@@ -3,8 +3,8 @@ import sys
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
-from ddpg import DDPG
-from model import OUNoise, TradeEnv
+from models.ddpg import DDPG
+from models.model import OUNoise, TradeEnv
 
 
 # env = NormalizedEnv(gym.make("Pendulum-v0"))

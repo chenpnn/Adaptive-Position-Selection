@@ -1,11 +1,11 @@
-from model import Memory, Actor, Critic, OUNoise
+from models.model import Memory, Actor, Critic, OUNoise
 
 import torch
 import torch.autograd
 from torch.autograd import Variable
 import torch.optim as optim
 import torch.nn as nn
-from model import *
+from models.model import *
 
 
 class DDPG():
