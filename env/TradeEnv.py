@@ -5,7 +5,7 @@ from gymnasium import spaces
 
 
 class TradeEnv(gym.Env):
-    """A customed stock trading environment based on OpenAI gymnasium"""
+    """A custom stock trading environment based on OpenAI gymnasium"""
     metadata = {'render.modes': ['human']}
 
     def __init__(self, 
