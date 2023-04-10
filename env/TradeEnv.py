@@ -13,8 +13,7 @@ class TradeEnv(gym.Env):
                  df_stock,
                  df_factor,
                  look_forward=1,
-                 fee_buy = 0.001,
-                 fee_sell = 0.001
+                 fee = 0.001,
         ):
         '''
         - df_macro:
@@ -37,8 +36,7 @@ class TradeEnv(gym.Env):
         print('df_factor shape: ', self.data_factor.shape)
 
         self.look_forward = look_forward
-        self.fee_buy = fee_buy
-        self.fee_sell = fee_sell
+        self.fee = fee
 
         self.current_idx = 0
         self.max_idx = len(self.data_macro)-1
