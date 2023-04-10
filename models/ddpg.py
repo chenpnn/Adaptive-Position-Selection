@@ -11,7 +11,7 @@ from models.model import *
 class DDPG():
     def __init__(self, 
                  env, 
-                 hidden_size=256, 
+                 hidden_size=128, 
                  actor_learning_rate=1e-4, 
                  critic_learning_rate=1e-3, 
                  gamma=0.99,  # discount factor 
@@ -20,8 +20,8 @@ class DDPG():
         ):
 
         # Params
-        self.num_states = env.observation_space.shape[0]
-        self.num_actions = env.action_space.shape[0]
+        self.num_states = env.num_macros  # 54
+        self.num_actions = env.num_actions  # 2
         self.gamma = gamma
         self.tau = tau
 
@@ -46,7 +46,7 @@ class DDPG():
     def get_action(self, state):
         state = Variable(torch.from_numpy(state).float().unsqueeze(0))
         action = self.actor.forward(state)
-        action = action.detach().numpy()[0,0]
+        action = action.detach().numpy()[0, 0]
         return action
     
     def update(self, batch_size):
