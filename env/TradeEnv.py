@@ -59,7 +59,7 @@ class TradeEnv(gym.Env):
         - action: action = [scale, threshold], shape=(2,)
         '''
         # the larger the scale, more concentrated the weights
-        scale, threshold = action
+        scale, threshold = action[0], action[1]
         factor = np.array(factor)
         w = np.tanh(scale * np.maximum(factor-threshold, 0))
         w /= np.sum(w)
@@ -70,25 +70,28 @@ class TradeEnv(gym.Env):
         if self.current_idx + self.look_forward > self.max_idx:
             self.current_idx = 0
             self.terminated  = True
+            return None, None, True
         else:
             factor = self.data_factor[self.current_idx]
             factor = (factor - np.mean(factor)) / np.std(factor)  # scale the factor array
             w = self._to_weight(factor, action)
             self.fee = np.linalg.norm(w - self.observation['position'], 1) * self.fee_ratio # transaction fee
-            ret = self.data_stock[self.current_idx + self.look_forward] / self.data_stock[self.current_idx] - 1
+            ret = self.data_stock[self.current_idx + self.look_forward] / self.data_stock[self.current_idx + 1] - 1
             self.observation = {
                 'return': ret,
                 'factor': factor,
                 'position': w
             }
-            self.reward = ret @ w - self.fee
+            reward = ret @ w - self.fee
             self.current_idx += 1
-        return self.observation, self.reward, self.terminated
+            next_state = self.data_macro[self.current_idx]
+            return next_state, reward, False
 
 
     # important
     def reset(self):
         self.observation = {'position': np.zeros(self.data_stock.shape[1])}  # set position to zero
+        return self.data_macro[0]
     
     # optional
     def render(self, mode='human', close=False):

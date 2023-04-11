@@ -33,7 +33,11 @@ class Memory:
             reward_batch.append(reward)
             next_state_batch.append(next_state)
             done_batch.append(done)
-        
+        state_batch = np.array(state_batch)
+        action_batch = np.array(action_batch)
+        reward_batch = np.array(reward_batch)
+        next_state_batch = np.array(next_state_batch)
+        done_batch = np.array(done_batch)
         return state_batch, action_batch, reward_batch, next_state_batch, done_batch
 
     def __len__(self):
@@ -111,53 +115,53 @@ class OUNoise(object):
 # 计算得到当日奖励 r_t = ret_t @ w_t
 
 # 环境需要一个idx，来标记当前日期，初始时为0，滑动到最后时一轮游戏结束
-class TradeEnv(object):
-    def __init__(self, 
-                 path='./data/processed/',
-                 start_date=None,
-                 end_date=None,
-        ):
-        self.macro_data = pd.read_csv(path+'macro_data.csv')
-        self.factor_data = None
-        self.stock_data = None
-        self.dates = None
+# class TradeEnv(object):
+#     def __init__(self, 
+#                  path='./data/processed/',
+#                  start_date=None,
+#                  end_date=None,
+#         ):
+#         self.macro_data = pd.read_csv(path+'macro_data.csv')
+#         self.factor_data = None
+#         self.stock_data = None
+#         self.dates = None
 
-        self.num_actions = 2
-        self.num_states = self.macro_data.shape[1] - 1
-        self.done = False
-        self.idx=0
-        # self.state_observation = [self.x, self.y]
+#         self.num_actions = 2
+#         self.num_states = self.macro_data.shape[1] - 1
+#         self.done = False
+#         self.idx=0
+#         # self.state_observation = [self.x, self.y]
 
-    def _to_weight(self, factor, action):
-        # the larger the scale, more concentrated the weights
-        scale, threshold = action
-        factor = np.array(factor)
-        w = np.tanh(scale * np.maximum(factor-threshold, 0))
-        w /= np.sum(w)
-        return w
+#     def _to_weight(self, factor, action):
+#         # the larger the scale, more concentrated the weights
+#         scale, threshold = action
+#         factor = np.array(factor)
+#         w = np.tanh(scale * np.maximum(factor-threshold, 0))
+#         w /= np.sum(w)
+#         return w
 
-    # reset the agent when an episode begins    
-    def reset(self):
-        self.idx = 0
-        self.done = False
+#     # reset the agent when an episode begins    
+#     def reset(self):
+#         self.idx = 0
+#         self.done = False
 
-    # Agent takes the step, i.e. take action to interact with the environment
-    def step(self, action):
+#     # Agent takes the step, i.e. take action to interact with the environment
+#     def step(self, action):
         
-        factor = None
-        self.weight = self._to_weight(factor, action)
-        reward = self.get_reward()
-        return np.array(self.state_observation), self.reward, self.done
+#         factor = None
+#         self.weight = self._to_weight(factor, action)
+#         reward = self.get_reward()
+#         return np.array(self.state_observation), self.reward, self.done
     
-    # Action reward given to the agent
-    def get_reward(self):
-        ret = None
-        reward = ret @ self.weight
-        return reward
+#     # Action reward given to the agent
+#     def get_reward(self):
+#         ret = None
+#         reward = ret @ self.weight
+#         return reward
     
-    # Actual action that agent takes.
-    def take_action(self):
-        self.idx += 1  # jump to the next date
+#     # Actual action that agent takes.
+#     def take_action(self):
+#         self.idx += 1  # jump to the next date
 
 
 
