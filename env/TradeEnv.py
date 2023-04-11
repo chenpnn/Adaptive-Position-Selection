@@ -67,7 +67,7 @@ class TradeEnv(gym.Env):
     
     # important
     def step(self, action):
-        if self.current_idx + self.look_forward > self.max_idx:
+        if self.current_idx + self.look_forward + 1 > self.max_idx:
             self.current_idx = 0
             self.terminated  = True
             return None, None, True
@@ -76,14 +76,14 @@ class TradeEnv(gym.Env):
             factor = (factor - np.mean(factor)) / np.std(factor)  # scale the factor array
             w = self._to_weight(factor, action)
             self.fee = np.linalg.norm(w - self.observation['position'], 1) * self.fee_ratio # transaction fee
-            ret = self.data_stock[self.current_idx + self.look_forward] / self.data_stock[self.current_idx] - 1
+            ret = self.data_stock[self.current_idx + self.look_forward + 1] / self.data_stock[self.current_idx + 1] - 1
             self.observation = {
                 'return': ret,
                 'factor': factor,
                 'position': w
             }
             reward = ret @ w - self.fee
-            self.current_idx += 1
+            self.current_idx += 1 + self.look_forward
             next_state = self.data_macro[self.current_idx]
             return next_state, reward, False
 
