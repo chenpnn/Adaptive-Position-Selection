@@ -13,7 +13,7 @@ class TradeEnv(gym.Env):
                  df_stock,
                  df_factor,
                  look_forward=1,
-                 fee_ratio = 1e-3,
+                 fee_ratio=2e-4,
         ):
         '''
         - df_macro:
@@ -76,7 +76,7 @@ class TradeEnv(gym.Env):
             factor = (factor - np.mean(factor)) / np.std(factor)  # scale the factor array
             w = self._to_weight(factor, action)
             self.fee = np.linalg.norm(w - self.observation['position'], 1) * self.fee_ratio # transaction fee
-            ret = self.data_stock[self.current_idx + self.look_forward] / self.data_stock[self.current_idx + 1] - 1
+            ret = self.data_stock[self.current_idx + self.look_forward] / self.data_stock[self.current_idx] - 1
             self.observation = {
                 'return': ret,
                 'factor': factor,

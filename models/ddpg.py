@@ -11,7 +11,7 @@ class DDPG():
                  env, 
                  hidden_size=128, 
                  actor_learning_rate=1e-4, 
-                 critic_learning_rate=1e-4, 
+                 critic_learning_rate=1e-3, 
                  gamma=0.99,  # discount factor 
                  tau=1e-2,  # update rate of target network, tau << 1
                  max_memory_size=50000
@@ -24,10 +24,10 @@ class DDPG():
         self.tau = tau
 
         # Networks
-        self.actor = Actor(self.num_states, hidden_size, self.num_actions)
-        self.actor_target = Actor(self.num_states, hidden_size, self.num_actions)
-        self.critic = Critic(self.num_states + self.num_actions, hidden_size, 1)
-        self.critic_target = Critic(self.num_states + self.num_actions, hidden_size, 1)
+        self.actor = Actor(self.num_states, hidden_size, self.num_actions).cuda()
+        self.actor_target = Actor(self.num_states, hidden_size, self.num_actions).cuda()
+        self.critic = Critic(self.num_states + self.num_actions, hidden_size, 1).cuda()
+        self.critic_target = Critic(self.num_states + self.num_actions, hidden_size, 1).cuda()
 
         for target_param, param in zip(self.actor_target.parameters(), self.actor.parameters()):
             target_param.data.copy_(param.data)
@@ -42,18 +42,18 @@ class DDPG():
         self.critic_optimizer = optim.Adam(self.critic.parameters(), lr=critic_learning_rate)
     
     def get_action(self, state):
-        state = Variable(torch.from_numpy(state).float().unsqueeze(0))
+        state = Variable(torch.from_numpy(state).float().unsqueeze(0)).cuda()
         action = self.actor.forward(state)
-        action = action.detach().numpy()[0]
+        action = action.cpu().detach().numpy()[0]
         return action
     
     def update(self, batch_size):
         self.counter += 1
         states, actions, rewards, next_states, _ = self.memory.sample(batch_size)
-        states = torch.FloatTensor(states)
-        actions = torch.FloatTensor(actions)
-        rewards = torch.FloatTensor(rewards)
-        next_states = torch.FloatTensor(next_states)
+        states = torch.FloatTensor(states).cuda()
+        actions = torch.FloatTensor(actions).cuda()
+        rewards = torch.FloatTensor(rewards).cuda()
+        next_states = torch.FloatTensor(next_states).cuda()
     
         # Critic loss        
         Qvals = self.critic.forward(states, actions)  
