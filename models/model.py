@@ -89,7 +89,7 @@ class Actor(nn.Module):
             nn.Linear(32, 8),
             nn.ReLU(),
             nn.Linear(8, 1),
-            nn.ReLU(),
+            nn.Sigmoid(),
         )
 
         self.linear2 = nn.Sequential(
@@ -113,7 +113,7 @@ class Actor(nn.Module):
         x = self.common_linear(state)
         x1, x2 = x[:, :self.m], x[:, self.n:]
         x1 = self.linear1(x1)
-        x2 = 3 * self.linear2(x2)
+        x2 = self.linear2(x2)
 
         # x1 = nn.ReLU()(x[:, 0])  # scale
         # x2 = 3 * nn.Tanh()(x[:, 1])  # threshold
