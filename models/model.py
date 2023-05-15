@@ -44,39 +44,100 @@ class Memory:
         return len(self.buffer)
 
 class Critic(nn.Module):
-    def __init__(self, input_size, hidden_size, output_size):
+    def __init__(self, input_size, hidden_size_list, output_size):
         super(Critic, self).__init__()
-        self.linear1 = nn.Linear(input_size, hidden_size)
-        self.linear2 = nn.Linear(hidden_size, hidden_size)
-        self.linear3 = nn.Linear(hidden_size, output_size)
+        linear_list = [nn.Linear(input_size, hidden_size_list[0]), nn.ReLU()]
+        for i in range(len(hidden_size_list)):
+            if i < len(hidden_size_list) - 1:
+                linear_list.append(nn.Linear(hidden_size_list[i], hidden_size_list[i+1]))
+                linear_list.append(nn.ReLU())
+            else:
+                linear_list.append(nn.Linear(hidden_size_list[i], output_size))
+        self.linears = nn.Sequential(*linear_list)
 
     def forward(self, state, action):
         """
         Params state and actions are torch tensors
         """
         x = torch.cat([state, action], 1)
-        x = F.relu(self.linear1(x))
-        x = F.relu(self.linear2(x))
-        x = self.linear3(x)
-
+        x = self.linears(x)
         return x
 
 class Actor(nn.Module):
-    def __init__(self, input_size, hidden_size, output_size, learning_rate = 3e-4):
+    def __init__(self, input_size, hidden_size_list, output_size):
         super(Actor, self).__init__()
-        self.linear1 = nn.Linear(input_size, hidden_size)
-        self.linear2 = nn.Linear(hidden_size, hidden_size)
-        self.linear3 = nn.Linear(hidden_size, output_size)
+        linear_list = [nn.Linear(input_size, hidden_size_list[0]), nn.ReLU()]
+        for i in range(len(hidden_size_list)):
+            if i < len(hidden_size_list) - 1:
+                linear_list.append(nn.Linear(hidden_size_list[i], hidden_size_list[i+1]))
+                linear_list.append(nn.ReLU())
+            else:
+                pass
+                # linear_list.append(nn.Linear(hidden_size_list[i], output_size))
+                # linear_list.append(nn.Tanh())
+        self.common_linear = nn.Sequential(*linear_list)
+        self.m = hidden_size_list[-1] // 2
+        self.n = hidden_size_list[-1] - self.m
+
+        self.linear1 = nn.Sequential(
+            nn.Linear(self.m, 64),
+            nn.ReLU(),
+            nn.Linear(64, 64),
+            nn.ReLU(),
+            nn.Linear(64, 32),
+            nn.ReLU(),
+            nn.Linear(32, 8),
+            nn.ReLU(),
+            nn.Linear(8, 1),
+            nn.ReLU(),
+        )
+
+        self.linear2 = nn.Sequential(
+            nn.Linear(self.n, 64),
+            nn.ReLU(),
+            nn.Linear(64, 64),
+            nn.ReLU(),
+            nn.Linear(64, 32),
+            nn.ReLU(),
+            nn.Linear(32, 8),
+            nn.ReLU(),
+            nn.Linear(8, 1),
+            nn.Tanh(),
+        )
+        
         
     def forward(self, state):
         """
         Param state is a torch tensor
         """
-        x = F.relu(self.linear1(state))
-        x = F.relu(self.linear2(x))
-        x = torch.tanh(self.linear3(x))
+        x = self.common_linear(state)
+        x1, x2 = x[:, :self.m], x[:, self.n:]
+        x1 = self.linear1(x1)
+        x2 = 3 * self.linear2(x2)
 
-        return x
+        # x1 = nn.ReLU()(x[:, 0])  # scale
+        # x2 = 3 * nn.Tanh()(x[:, 1])  # threshold
+        out = torch.cat([x1.reshape(-1, 1), 
+                       x2.reshape(-1, 1)], 1)
+        return out
+
+
+# class Actor(nn.Module):
+#     def __init__(self, input_size, hidden_size, output_size):
+#         super(Actor, self).__init__()
+#         self.linear1 = nn.Linear(input_size, hidden_size)
+#         self.linear2 = nn.Linear(hidden_size, hidden_size)
+#         self.linear3 = nn.Linear(hidden_size, output_size)
+        
+#     def forward(self, state):
+#         """
+#         Param state is a torch tensor
+#         """
+#         x = F.relu(self.linear1(state))
+#         x = F.relu(self.linear2(x))
+#         x = torch.tanh(self.linear3(x))
+
+#         return x
 
 class OUNoise(object):
     def __init__(self, 
@@ -114,66 +175,6 @@ class OUNoise(object):
         self.sigma = self.max_sigma - (self.max_sigma - self.min_sigma) * min(1.0, t / self.decay_period)
         return np.clip(action + ou_state, self.low, self.high)
 
-# https://medium.com/analytics-vidhya/a-simple-reinforcement-learning-environment-from-scratch-72c37bb44843
-
-# 三类数据集：宏观特征(T*M)、单因子(T*N)和股票收益率(T*N)
-# T：交易日个数、M：宏观特征个数、N：股票只数
-# 给定一个日期t，提取当日宏观特征向量m_t，因子向量f_t, 股票收益率向量ret_t
-# 输入一个动作a_t=(scale_t, threshold_t)，
-# 计算得到一个权重， w_t = tanh(scale_t * max(f_t - threshold_t, 0))
-# 计算得到当日奖励 r_t = ret_t @ w_t
-
-# 环境需要一个idx，来标记当前日期，初始时为0，滑动到最后时一轮游戏结束
-# class TradeEnv(object):
-#     def __init__(self, 
-#                  path='./data/processed/',
-#                  start_date=None,
-#                  end_date=None,
-#         ):
-#         self.macro_data = pd.read_csv(path+'macro_data.csv')
-#         self.factor_data = None
-#         self.stock_data = None
-#         self.dates = None
-
-#         self.num_actions = 2
-#         self.num_states = self.macro_data.shape[1] - 1
-#         self.done = False
-#         self.idx=0
-#         # self.state_observation = [self.x, self.y]
-
-#     def _to_weight(self, factor, action):
-#         # the larger the scale, more concentrated the weights
-#         scale, threshold = action
-#         factor = np.array(factor)
-#         w = np.tanh(scale * np.maximum(factor-threshold, 0))
-#         w /= np.sum(w)
-#         return w
-
-#     # reset the agent when an episode begins    
-#     def reset(self):
-#         self.idx = 0
-#         self.done = False
-
-#     # Agent takes the step, i.e. take action to interact with the environment
-#     def step(self, action):
-        
-#         factor = None
-#         self.weight = self._to_weight(factor, action)
-#         reward = self.get_reward()
-#         return np.array(self.state_observation), self.reward, self.done
-    
-#     # Action reward given to the agent
-#     def get_reward(self):
-#         ret = None
-#         reward = ret @ self.weight
-#         return reward
-    
-#     # Actual action that agent takes.
-#     def take_action(self):
-#         self.idx += 1  # jump to the next date
-
-
-
 
 
 
@@ -183,12 +184,18 @@ if __name__=='__main__':
     NUM_STATES, NUM_ACTIONS = 30, 3
     HIDDEN_SIZE = 128
     buffer = Memory(max_size=10000)
-    actor = Actor(input_size=NUM_STATES, hidden_size=HIDDEN_SIZE, output_size=NUM_ACTIONS)
-    actor_target = Actor(input_size=NUM_STATES, hidden_size=HIDDEN_SIZE, output_size=NUM_ACTIONS)
-    critic = Critic(input_size=NUM_STATES+NUM_ACTIONS, hidden_size=HIDDEN_SIZE, output_size=NUM_ACTIONS)
-    critic_target = Critic(input_size=NUM_STATES+NUM_ACTIONS, hidden_size=HIDDEN_SIZE, output_size=NUM_ACTIONS)
+    actor = Actor(input_size=NUM_STATES, hidden_size_list=[128, 128], output_size=NUM_ACTIONS)
+    actor_target = Actor(input_size=NUM_STATES, hidden_size_list=[128, 128], output_size=NUM_ACTIONS)
+    critic = Critic(input_size=NUM_STATES+NUM_ACTIONS, hidden_size_list=[128, 128], output_size=NUM_ACTIONS)
+    critic_target = Critic(input_size=NUM_STATES+NUM_ACTIONS, hidden_size_list=[128, 128], output_size=NUM_ACTIONS)
 
     for target_param, param in zip(actor_target.parameters(), actor.parameters()):
         target_param.data.copy_(param.data)
     for target_param, param in zip(critic_target.parameters(), critic.parameters()):
         target_param.data.copy_(param.data)
+
+    actor = Actor(100, [64, 128], 2)
+    x = torch.rand(32, 100)
+    out = actor(x)
+
+

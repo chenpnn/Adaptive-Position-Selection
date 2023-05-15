@@ -9,9 +9,9 @@ from models.model import Memory, Actor, Critic, OUNoise
 class DDPG():
     def __init__(self, 
                  env, 
-                 hidden_size=128, 
+                 hidden_size_list=[64, 128, 64], 
                  actor_learning_rate=1e-4, 
-                 critic_learning_rate=1e-3, 
+                 critic_learning_rate=1e-4, 
                  gamma=0.99,  # discount factor 
                  tau=1e-2,  # update rate of target network, tau << 1
                  max_memory_size=50000
@@ -24,10 +24,10 @@ class DDPG():
         self.tau = tau
 
         # Networks
-        self.actor = Actor(self.num_states, hidden_size, self.num_actions).cuda()
-        self.actor_target = Actor(self.num_states, hidden_size, self.num_actions).cuda()
-        self.critic = Critic(self.num_states + self.num_actions, hidden_size, 1).cuda()
-        self.critic_target = Critic(self.num_states + self.num_actions, hidden_size, 1).cuda()
+        self.actor = Actor(self.num_states, hidden_size_list, self.num_actions).cuda()
+        self.actor_target = Actor(self.num_states, hidden_size_list, self.num_actions).cuda()
+        self.critic = Critic(self.num_states + self.num_actions, hidden_size_list, 1).cuda()
+        self.critic_target = Critic(self.num_states + self.num_actions, hidden_size_list, 1).cuda()
 
         for target_param, param in zip(self.actor_target.parameters(), self.actor.parameters()):
             target_param.data.copy_(param.data)
@@ -42,6 +42,7 @@ class DDPG():
         self.critic_optimizer = optim.Adam(self.critic.parameters(), lr=critic_learning_rate)
     
     def get_action(self, state):
+        '''state is the vector of macro features'''
         state = Variable(torch.from_numpy(state).float().unsqueeze(0)).cuda()
         action = self.actor.forward(state)
         action = action.cpu().detach().numpy()[0]

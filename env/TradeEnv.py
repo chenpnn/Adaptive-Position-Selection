@@ -62,7 +62,11 @@ class TradeEnv(gym.Env):
         scale, threshold = action[0], action[1]
         factor = np.array(factor)
         w = np.tanh(scale * np.maximum(factor-threshold, 0))
-        w /= np.sum(w)
+        sum_ = np.sum(w)
+        if sum_ == 0:
+            w = np.zeros_like(w)
+        else:
+            w /= sum_
         return w
     
     # important
