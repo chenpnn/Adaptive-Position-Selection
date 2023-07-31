@@ -11,6 +11,7 @@ from torch.autograd import Variable
 
 class Memory:
     def __init__(self, max_size):
+        max_size = int(max_size)
         self.buffer = deque(maxlen=max_size)
     
     def push(self, state, action, reward, next_state, done):
@@ -89,7 +90,7 @@ class Actor(nn.Module):
             nn.Linear(32, 8),
             nn.ReLU(),
             nn.Linear(8, 1),
-            nn.Sigmoid(),
+            # nn.Sigmoid(),
         )
 
         self.linear2 = nn.Sequential(
@@ -102,7 +103,8 @@ class Actor(nn.Module):
             nn.Linear(32, 8),
             nn.ReLU(),
             nn.Linear(8, 1),
-            nn.Tanh(),
+            # nn.Tanh(),
+            nn.Sigmoid(),
         )
         
         

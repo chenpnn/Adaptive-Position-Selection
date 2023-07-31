@@ -10,11 +10,11 @@ class DDPG():
     def __init__(self, 
                  env, 
                  hidden_size_list=[64, 128, 64], 
-                 actor_learning_rate=1e-4, 
-                 critic_learning_rate=1e-4, 
+                 actor_learning_rate=1e-3, 
+                 critic_learning_rate=1e-3, 
                  gamma=0.99,  # discount factor 
                  tau=1e-2,  # update rate of target network, tau << 1
-                 max_memory_size=50000
+                 max_memory_size=1e5
         ):
         self.counter = 0
         # Params
@@ -77,7 +77,7 @@ class DDPG():
         self.critic_optimizer.step()
 
         # update target networks 
-        if self.counter % 2 == 0:
+        if self.counter % 20 == 0:
             for target_param, param in zip(self.actor_target.parameters(), self.actor.parameters()):
                 target_param.data.copy_(param.data * self.tau + target_param.data * (1.0 - self.tau))
         

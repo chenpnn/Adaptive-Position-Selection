@@ -87,7 +87,7 @@ class TradeEnv(gym.Env):
                 'position': w
             }
             reward = ret @ w - self.fee
-            self.current_idx += 1 + self.look_forward
+            self.current_idx += 1 
             next_state = self.data_macro[self.current_idx]
             return next_state, reward, False
 

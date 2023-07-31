@@ -12,17 +12,17 @@ def normalize(x):
         raise Exception('The input is a constant list.')
     median = np.median(x)
     mad = np.median(np.abs(x - median))
-    idx_upper = x > median + 3 * 1.4826 * mad
-    idx_lower = x < median - 3 * 1.4826 * mad
+    idx_upper = (x > median + 3 * 1.4826 * mad)
+    idx_lower = (x < median - 3 * 1.4826 * mad)
     x[idx_upper] = median + 3 * 1.4826 * mad
     x[idx_lower] = median - 3 * 1.4826 * mad
 
     x = (x - np.mean(x)) / np.std(x)
     return x
 
-def roc1(x):  # rate of change
+def roc(x):  # rate of change
     x = np.array(x)
-    return talib.ROC(x, 1)
+    return talib.ROC(x, 21)
 
 def macd(x):
     x = np.array(x)
@@ -31,7 +31,7 @@ def macd(x):
 
 def sma(x):  # Simple-Moving-Average of ROC1
     x = np.array(x)
-    return talib.SMA(roc1(x), timeperiod=21)
+    return talib.SMA(roc(x), timeperiod=21)
 
 def mom(x):
     x = np.array(x)
@@ -41,12 +41,16 @@ def std(x):
     x = np.array(x)
     return talib.STDDEV(x, timeperiod=21)
 
+def varcoef(x):
+    x = np.array(x)
+    return talib.STDDEV(x, timeperiod=21) / talib.SMA(x, timeperiod=21)
+
 def slope(x):
     x = np.array(x)
     return talib.LINEARREG_SLOPE(x, timeperiod = 21)
 
 
-func_list = [roc1, macd, sma, mom, std, slope]
+func_list = [roc, macd, mom, varcoef, slope]
 
 if __name__ == '__main__':
     x = np.random.rand(100)
